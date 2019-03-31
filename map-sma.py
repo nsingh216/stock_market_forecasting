@@ -9,9 +9,7 @@ for line in sys.stdin:
 	dateD = datetime.datetime.strptime(date, '%m/%d/%Y %H:%M')
 
 	for i in range(0,smaInterval):
-		print "%s\t%s" % ((stock, dateD + datetime.timedelta(days=i),'o'),openPrice)
-		print "%s\t%s" % (stock, dateD + datetime.timedelta(days=i),'c'),closePrice)
-		print "%s\t%s" % (stock, dateD + datetime.timedelta(days=i),'l'),lowPrice)
-		print "%s\t%s" % (stock, dateD + datetime.timedelta(days=i),'h'),highPrice)
-
-
+		print "%s\t%s\t%s\t%s" % (stock, dateD + datetime.timedelta(days=i),'o',openPrice)
+		print "%s\t%s\t%s\t%s" % (stock, dateD + datetime.timedelta(days=i),'c',closePrice)
+		print "%s\t%s\t%s\t%s" % (stock, dateD + datetime.timedelta(days=i),'l',lowPrice)
+		print "%s\t%s\t%s\t%s" % (stock, dateD + datetime.timedelta(days=i),'h',highPrice)

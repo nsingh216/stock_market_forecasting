@@ -1,30 +1,13 @@
 import sys 
 
-lValueA = list() 
-lValueB = list() 
+averageList = {}
 
-smaInterval = sys.argv[1] 
 for line in sys.stdin: 
-	(key, val) = line.strip().split('\t') 
-	vals = val.split(':') 
+	stock, date, price, val = line.strip().split('\t') 
+	key = stock + "::" + date + "::" + price
+	averageList.setdefault(key, []).append(int(val))
 
-	lValueA.append(float(vals[0])) 
-	lValueB.append(float(vals[1])) 
-
-	if len(lValueA) == smaInterval:
-		sumA = 0
-		sumB = 0 
-
-	for a in lValueA: 
-		sumA += a 
-
-	for b in lValueB: 
-		sumB += b 
-
-	sumA = sumA / smaInterval 
-	sumB = sumB / smaInterval 
-
-	print "%s\t%.2f\t%.2f" % (key, sumA, sumB)
-
-	del lValueA[0] 
-	del lValueB[0]
+for k, v in averageList.items():
+	stock, date, price = k.split("::")
+	avg = sum(v)/len(v)
+	print "%s,%s,%s,%s" % (date,stock,price,avg)
