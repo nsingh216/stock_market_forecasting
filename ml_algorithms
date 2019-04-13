@@ -1,0 +1,195 @@
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, TimeSeriesSplit
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima_model import ARIMA
+# from yellowbrick.regressor import ResidualsPlot
+from pandas.plotting import autocorrelation_plot
+from fbprophet import Prophet
+
+def plot_actuals(x, y, ticker):
+    figure = plt.figure()
+    figure.title = "Start prices of " + ticker
+    plt.plot(x, y)
+    plt.xlabel("Time")
+    plt.ylabel("Starting Price")
+    plt.show()
+    # plt.savefig(ticker + ".png")
+
+
+def run_linear_regression(X_train, X_test, y_train, y_test):
+
+    X_train = pd.to_numeric(pd.to_datetime(X_train))
+    X_train = X_train.values.reshape(-1, 1)
+
+    X_test = pd.to_numeric(pd.to_datetime(X_test))
+    X_test = X_test.values.reshape(-1, 1)
+
+    regressor = LinearRegression()
+    regressor.fit(X_train, y_train)
+    predictions = regressor.predict(X_test)
+
+    r2 = r2_score(y_test, predictions)
+    print("R2 for " + ticker + ": " + str(r2))
+
+    mse = mean_squared_error(y_test, predictions)
+    print("MSE for " + ticker + ": " + str(mse))
+
+    plt.scatter(X_test, y_test, color='black')
+    plt.plot(X_test, predictions, color='blue', linewidth=3)
+
+    plt.xlabel("Time")
+    plt.ylabel("Starting Price")
+
+    plt.show()
+
+
+def run_arima(X_train, X_test, y_train, y_test):
+    predictions = list()
+    history = [x for x in X_train]
+
+    for t in range(len(X_test)):
+        model = ARIMA(X_train, order=(5, 1, 0))
+        model_fit = model.fit(disp=0, start_ar_lags=None)
+
+        print(model_fit.summary())
+        residuals = pd.DataFrame(model_fit.resid)
+        residuals.plot()
+        plt.show()
+        residuals.plot(kind='kde')
+        plt.show()
+        print(residuals.describe())
+
+        output = model_fit.forecast()
+        yhat = output[0]
+        predictions.append(yhat)
+        obs = X_test[t]
+        history.append(obs)
+        print('predicted=%f, expected=%f' % (yhat, obs))
+
+        model = ARIMA(X, order=(5, 1, 0))
+        model_fit = model.fit(disp=0)
+
+        # plot residual errors
+        residuals = pd.DataFrame(model_fit.resid)
+
+
+
+    error = mean_squared_error(X_test, predictions)
+    print('Test MSE: %.3f' % error)
+    # plot
+    plt.plot(y_train, y_test)
+    plt.plot(predictions, color='red')
+    plt.show()
+
+
+def run_prophet(train_df, test_df):
+    model = Prophet(weekly_seasonality=True)
+    model.fit(train_df)
+    # predict 52 weeks into the future
+    future = model.make_future_dataframe(periods=52, freq='W')
+    future.tail()
+    forecast = model.predict(future)
+    print(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
+    # line_graph(forecast.ds, forecast.yhat, "Predictions")
+    y_true = test_df['y']
+    y_forecast = forecast['yhat']
+
+    figure = model.plot(forecast)
+    plt.show()
+
+    smape = ((y_true - y_forecast).abs() / (y_true.abs() + y_forecast.abs())).mean() * 200
+    print('The SMAPE error is:', smape)
+    plot = model.plot(forecast)
+
+
+data_path = "./data/"
+
+df = pd.read_csv(data_path + "cooked_v3.csv")
+print(df.head())
+print(df.CalcDateTime.min())
+print(df.CalcDateTime.max())
+
+# tickers and their traded volumes
+volume_series = df.groupby('Mnemonic')['TradedVolume'].sum()
+volume_series.sort_values(ascending=False, inplace=True)
+print(volume_series)
+
+df.head()
+df.replace([np.inf, -np.inf], np.nan)
+df.dropna(inplace=True)
+
+for ticker in volume_series.index:
+    ticker_data = df[df.Mnemonic == ticker]
+
+    X = pd.to_numeric(pd.to_datetime(ticker_data['CalcDateTime']))
+    X = X.values.reshape(-1, 1)
+
+    Y = ticker_data['StartPrice']
+    print("Ticker " + ticker + " has " + str(len(X)) + " records.")
+
+    # plot daily since min-by-min is really slow
+    ticker_data['CalcDateTime'] = pd.to_datetime(ticker_data['CalcDateTime'])
+
+    # get mean prices per hour
+    # note -- using mean is incorrect for volume related columns
+    daily_ticker_data = ticker_data.reset_index().set_index(
+        'CalcDateTime').resample('D').mean().fillna(method='pad')
+    daily_ticker_data = daily_ticker_data.reset_index()
+    print(type(daily_ticker_data['CalcDateTime']))
+    daily_X = pd.to_datetime(daily_ticker_data['CalcDateTime'])
+    daily_Y = daily_ticker_data['StartPrice']
+
+
+    # ################## VISUALS #########################
+    # plot the daily actual prices using full dataset
+    # plot_actuals(daily_X, daily_Y, ticker)
+
+
+
+    # ############## LINEAR REGRESSION ###################
+    # using 25:75 break
+    tss = TimeSeriesSplit(n_splits=3)
+    X_train = X_test = y_train = y_test = pd.DataFrame()
+    for train_index, test_index in tss.split(daily_X):
+        X_train, X_test = daily_X[train_index], daily_X[test_index]
+        y_train, y_test = daily_Y[train_index], daily_Y[test_index]
+
+    # run and plot linear regression
+    run_linear_regression(X_train, X_test, y_train, y_test)
+
+
+    # ############## ARIMA ###################
+
+    # 1) Confirm that the data is NOT white noise
+
+    #       a) mean = 0?
+    #       b) variance is not constant?
+    #       c) compare with lag values
+    desc = daily_Y.describe()
+    print(desc['mean'])
+    print(desc['std'])
+    print(np.mean(Y))
+    print(np.std(Y))
+
+    if desc['mean'] != 0 or desc['std'] > 1:
+        autocorrelation_plot(X)
+        plt.show()
+        plt.clf()
+
+        # fit model
+        if ticker != 'SNH':
+            run_arima(X_train, X_test, y_train, y_test)
+
+    # 2) Check for stationarity
+
+    # ############## PROPHET ###################
+    train_df = pd.concat([X_train, y_train], axis=1)
+    train_df.columns = ['ds', 'y']
+
+    test_df = pd.concat([X_test, y_test], axis=1)
+    test_df.columns = ['ds', 'y']
+
+    run_prophet(train_df, test_df)
