@@ -7,7 +7,10 @@ For this project we explored stock market datasets and will utilize the Deutsche
 #### Files
 1) The linear regression colab notebook (Linear_Regression.ipynb) contains code to predict stock prices using Linear Regression
 
-2) The time series colab notebook (Time_Series.ipynb) contains code used to conduct some time series analysis (ACF Plots, PACF Plots, Decompose Time Series to various components (trend, seasonality, residuals), Dickey Fuller Test)
+2) The time series colab notebook (Time_Series.ipynb) contains code used to conduct some time series analysis (ACF Plots, PACF Plots, Decompose Time Series to various components (trend, seasonality, residuals), Dickey Fuller Test). It also contains code used to determine the optimum p, d, and q parameters for ARIMA using auto_arima in the pdarima module an example prediction for 1 of the tickers.
+
+#### Report
+A pdf version of the our report can be found on box [2] as well and contains the several other resources used for this project.
 
 
 #### Resources
