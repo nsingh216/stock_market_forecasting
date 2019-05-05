@@ -1,29 +1,16 @@
 # stock_market_forecasting
 
 
-### Time Series Forecasting Models
+#### Overview
+For this project we explored stock market datasets and will utilize the Deutsche Börse Public Dataset available on AWS [1]. This dataset contains minute-by-minute stock prices for two different markets (Xetra and Eurex). For our final project, we will be focusing our efforts on predicting short-term prices for the tickers in the Xetra market. The Xetra data have records ranging from July 3rd, 2017 to May 15th, 2018 for 100 tickers. The final CSV file used for the code pieces [2] contains about 15 million records in total (too large to upload here).
 
-In a time series model, the time interval of the input data must be constant (hourly, weekly, monthly, etc)
-We used univariate time series, where we used only one variable (time) to forecast the price. 
+#### Files
+1) The linear regression colab notebook (Linear_Regression.ipynb) contains code to predict stock prices using Linear Regression
 
-
-#### 1) Linear Regression
-#### 2) ARIMA
-    AR = Auto Regression: Linear Regression where lags from itself are used to predict future model [10]
-         In the python model, this value is represented by p, which is the number of lags that should be used in the prediction
-    I = Integrated: d = number of differencing required to make the it stationary
-        A time series data set has stationarity [11] when its statistical properties, such as mean and standard deviation do not change over time. With time series models, we make the assumption that the data is already stationary or can be transformed to be made stationary.
-        
-    MA = Moving Average: represented by q in the model; number of lagged forecast errors 
-    
-    
-    
-
-#### 3) FBProphet:
+2) The time series colab notebook (Time_Series.ipynb) contains code used to conduct some time series analysis (ACF Plots, PACF Plots, Decompose Time Series to various components (trend, seasonality, residuals), Dickey Fuller Test)
 
 
+#### Resources
+[1] The Deutsche Börse Public Dataset & Machine Learning - Notebook 1 (Obtain, Clean & Understand Data) https://github.com/Originate/dbg-pds-tensorflow-demo/blob/master/notebooks/01-data-cleaning-single-stock.ipynb
 
-### Sources 
-10 https://www.machinelearningplus.com/time-series/arima-model-time-series-forecasting-python/
-
-11 https://people.duke.edu/~rnau/411diff.htm
+[2] https://uofi.app.box.com/folder/62554512474 
