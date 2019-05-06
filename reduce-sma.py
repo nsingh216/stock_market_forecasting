@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys 
 
 averageList = {}
@@ -5,7 +6,7 @@ averageList = {}
 for line in sys.stdin: 
 	stock, date, price, val = line.strip().split('\t') 
 	key = stock + "::" + date + "::" + price
-	averageList.setdefault(key, []).append(int(val))
+	averageList.setdefault(key, []).append(float(val))
 
 for k, v in averageList.items():
 	stock, date, price = k.split("::")
